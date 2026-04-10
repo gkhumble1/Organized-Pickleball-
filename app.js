@@ -1,6 +1,8 @@
 // --- Data model & persistence ----------------------------------------------
 
 const STORAGE_KEY = "pickleball_rotation_v1";
+const STORAGE_KEY = "pickleball_rotation_v1";
+const ROSTERS_KEY = "pickleball_rosters_v1"; // name -> players snapshot
 
 let players = [];
 let courts = [];
