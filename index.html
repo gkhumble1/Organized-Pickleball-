@@ -19,7 +19,26 @@
 
   <main class="layout">
     <!-- LEFT: Players & Controls -->
-    <section class="panel panel-left">
+    <section class="panel panel-left">      
+      <div class="summary-card">
+        <h3>Choose Roster</h3>
+        <div class="panel-subtitle">Save and reuse player lists with stats on this device.</div>
+
+        <div class="roster-tools">
+          <label for="rosterSelect" style="font-size:0.8rem; display:block; margin-bottom:4px;">
+            Select roster:
+          </label>
+          <select id="rosterSelect" style="width:100%; margin-bottom:8px;">
+            <option value="">(No roster selected)</option>
+          </select>
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="saveRosterBtn">Save Roster As…</button>
+            <button id="loadRosterFromSelectBtn" class="secondary">Load Selected</button>
+          </div>
+        </div>
+      </div>
+
       <h2>Players</h2>
       <p class="panel-subtitle">Fixed numbers · names saved · stats tracked</p>
 
