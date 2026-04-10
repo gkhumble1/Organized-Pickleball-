@@ -19,26 +19,7 @@
 
   <main class="layout">
     <!-- LEFT: Players & Controls -->
-    <section class="panel panel-left">      
-      <div class="summary-card">
-        <h3>Choose Roster</h3>
-        <div class="panel-subtitle">Save and reuse player lists with stats on this device.</div>
-
-        <div class="roster-tools">
-          <label for="rosterSelect" style="font-size:0.8rem; display:block; margin-bottom:4px;">
-            Select roster:
-          </label>
-          <select id="rosterSelect" style="width:100%; margin-bottom:8px;">
-            <option value="">(No roster selected)</option>
-          </select>
-
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button id="saveRosterBtn">Save Roster As…</button>
-            <button id="loadRosterFromSelectBtn" class="secondary">Load Selected</button>
-          </div>
-        </div>
-      </div>
-
+    <section class="panel panel-left">
       <h2>Players</h2>
       <p class="panel-subtitle">Fixed numbers · names saved · stats tracked</p>
 
@@ -53,6 +34,26 @@
         <button id="randomizeOrderBtn">Randomize Starting Order</button>
         <button id="resetSessionBtn" class="secondary">Reset Session (keep names)</button>
         <button id="resetAllBtn" class="danger">Reset Everything</button>
+      </div>
+
+      <!-- NEW: Choose Roster section -->
+      <div class="summary-card">
+        <h3>Choose Roster</h3>
+        <p class="panel-subtitle">Save and reuse player lists with stats on this device.</p>
+
+        <div class="roster-tools">
+          <label for="rosterSelect" class="roster-label">
+            Select roster:
+          </label>
+          <select id="rosterSelect" class="roster-select">
+            <option value="">(No roster selected)</option>
+          </select>
+
+          <div class="roster-buttons">
+            <button id="saveRosterBtn">Save Roster As…</button>
+            <button id="loadRosterFromSelectBtn" class="secondary">Load Selected</button>
+          </div>
+        </div>
       </div>
 
       <h3>Stats</h3>
@@ -174,4 +175,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-
