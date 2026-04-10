@@ -1,7 +1,6 @@
 // --- Data model & persistence ----------------------------------------------
 
 const STORAGE_KEY = "pickleball_rotation_v1";
-const STORAGE_KEY = "pickleball_rotation_v1";
 const ROSTERS_KEY = "pickleball_rosters_v1"; // name -> players snapshot
 
 let players = [];
@@ -56,6 +55,9 @@ function loadState() {
     return null;
   }
 }
+
+// --- Roster persistence ----------------------------------------------------
+
 function loadRostersMap() {
   try {
     const raw = localStorage.getItem(ROSTERS_KEY);
@@ -92,6 +94,7 @@ function refreshRosterSelect() {
     select.value = currentValue;
   }
 }
+
 function saveCurrentRosterAs() {
   const rostersMap = loadRostersMap();
 
@@ -99,7 +102,6 @@ function saveCurrentRosterAs() {
   const rosterName = prompt("Enter a name for this roster:", defaultName || "New Roster");
   if (!rosterName) return;
 
-  // Build snapshot: only what you care about
   const snapshot = players.map((p) => ({
     name: p.name,
     games: p.games,
@@ -114,6 +116,7 @@ function saveCurrentRosterAs() {
   $("rosterSelect").value = rosterName;
   alert(`Roster "${rosterName}" saved on this device.`);
 }
+
 function loadRosterFromSelect() {
   const select = $("rosterSelect");
   if (!select) return;
@@ -131,19 +134,16 @@ function loadRosterFromSelect() {
     return;
   }
 
-  if (!confirm(`Load roster "${rosterName}"? This may reset stats for changed players.`)) {
+  if (!confirm(`Load roster "${rosterName}"? This will update players and stats.`)) {
     return;
   }
 
-  // Apply snapshot to players
   for (let i = 0; i < players.length; i++) {
     const p = players[i];
     const snap = snapshot[i];
 
     if (!snap || !snap.name) {
-      // No player in this slot in the roster
       if (p.name) {
-        // Clear this slot
         p.name = "";
         p.games = 0;
         p.rest = 0;
@@ -155,7 +155,6 @@ function loadRosterFromSelect() {
       continue;
     }
 
-    // If name changed, reset stats to snapshot (and clear partners/opponents)
     if (p.name !== snap.name) {
       p.name = snap.name;
       p.games = snap.games || 0;
@@ -165,16 +164,13 @@ function loadRosterFromSelect() {
       p.partners = {};
       p.opponents = {};
     } else {
-      // Same name: update stats from snapshot (building across sessions)
-      p.games = snap.games || p.games;
-      p.rest = snap.rest || p.rest;
-      p.wins = snap.wins || p.wins;
-      p.losses = snap.losses || p.losses;
-      // partners/opponents intentionally not restored
+      p.games = snap.games ?? p.games;
+      p.rest = snap.rest ?? p.rest;
+      p.wins = snap.wins ?? p.wins;
+      p.losses = snap.losses ?? p.losses;
     }
   }
 
-  // Clear courts & history when loading a roster
   courts = [];
   historyStack = [];
   currentRoundId = 0;
@@ -189,7 +185,6 @@ function loadRosterFromSelect() {
 
   alert(`Roster "${rosterName}" loaded.`);
 }
-
 
 // --- DOM helpers -----------------------------------------------------------
 
@@ -214,7 +209,6 @@ function renderPlayersList() {
       const newName = nameInput.value.trim();
       if (newName === oldName) return;
       p.name = newName;
-      // If name changed from non-empty to different non-empty, reset stats
       if (oldName && oldName !== newName) {
         p.games = 0;
         p.rest = 0;
@@ -503,7 +497,6 @@ function generateNextRound() {
     return;
   }
 
-  // Sort by rest desc, games asc, id asc
   const sorted = [...activePlayers].sort((a, b) => {
     if (b.rest !== a.rest) return b.rest - a.rest;
     if (a.games !== b.games) return a.games - b.games;
@@ -512,7 +505,6 @@ function generateNextRound() {
 
   const playersThisRound = sorted.slice(0, courtsCount * 4);
 
-  // Build courts
   const newCourts = [];
   for (let c = 0; c < courtsCount; c++) {
     const group = playersThisRound.slice(c * 4, c * 4 + 4);
@@ -521,14 +513,12 @@ function generateNextRound() {
     newCourts.push(bestSplit);
   }
 
-  // Save history snapshot for undo
   historyStack.push({
     roundId: currentRoundId + 1,
     players: JSON.parse(JSON.stringify(players)),
     courts: JSON.parse(JSON.stringify(courts)),
   });
 
-  // Update stats
   const playingIds = newCourts.flatMap((c) => [...c.team1, ...c.team2]);
   const playingSet = new Set(playingIds);
 
@@ -541,7 +531,6 @@ function generateNextRound() {
     }
   });
 
-  // Update partner/opponent history
   newCourts.forEach((court) => {
     const [a, b] = court.team1;
     const [c, d] = court.team2;
@@ -582,7 +571,6 @@ function addOpponent(pid, oppId) {
   p.opponents[oppId] = (p.opponents[oppId] || 0) + 1;
 }
 
-// Choose best team split for 4 players based on partner/opponent penalties
 function chooseBestTeamSplit(ids) {
   const [p1, p2, p3, p4] = ids;
   const splits = [
@@ -941,18 +929,8 @@ window.addEventListener("DOMContentLoaded", () => {
   renderSummary();
   renderNeedsToPlay();
   updateTimerDisplay();
+
   refreshRosterSelect();
-
-  const saveRosterBtn = $("saveRosterBtn");
-  if (saveRosterBtn) {
-    saveRosterBtn.addEventListener("click", saveCurrentRosterAs);
-  }
-
-  const loadRosterFromSelectBtn = $("loadRosterFromSelectBtn");
-  if (loadRosterFromSelectBtn) {
-    loadRosterFromSelectBtn.addEventListener("click", loadRosterFromSelect);
-  }
-
 
   $("themeToggle").addEventListener("click", toggleTheme);
   $("nextRoundBtn").addEventListener("click", generateNextRound);
@@ -974,5 +952,14 @@ window.addEventListener("DOMContentLoaded", () => {
   $("pauseTimerBtn").addEventListener("click", pauseTimer);
   $("resetTimerBtn").addEventListener("click", resetTimer);
   $("timerDuration").addEventListener("change", resetTimer);
-  
+
+  const saveRosterBtn = $("saveRosterBtn");
+  if (saveRosterBtn) {
+    saveRosterBtn.addEventListener("click", saveCurrentRosterAs);
+  }
+
+  const loadRosterFromSelectBtn = $("loadRosterFromSelectBtn");
+  if (loadRosterFromSelectBtn) {
+    loadRosterFromSelectBtn.addEventListener("click", loadRosterFromSelect);
+  }
 });
