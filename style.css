@@ -550,6 +550,35 @@ button:disabled {
   background: rgba(148, 163, 184, 0.2);
 }
 
+/* NEW: Roster tools styling */
+.roster-tools {
+  margin-top: 4px;
+}
+
+.roster-label {
+  font-size: 0.8rem;
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+}
+
+.roster-select {
+  width: 100%;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.roster-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 1024px) {
   .layout {
     grid-template-columns: 1fr;
