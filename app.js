@@ -56,6 +56,140 @@ function loadState() {
     return null;
   }
 }
+function loadRostersMap() {
+  try {
+    const raw = localStorage.getItem(ROSTERS_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+function saveRostersMap(map) {
+  localStorage.setItem(ROSTERS_KEY, JSON.stringify(map));
+}
+
+function refreshRosterSelect() {
+  const select = $("rosterSelect");
+  if (!select) return;
+
+  const rostersMap = loadRostersMap();
+  const currentValue = select.value;
+
+  select.innerHTML = '<option value="">(No roster selected)</option>';
+
+  Object.keys(rostersMap)
+    .sort()
+    .forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      select.appendChild(opt);
+    });
+
+  if (currentValue && rostersMap[currentValue]) {
+    select.value = currentValue;
+  }
+}
+function saveCurrentRosterAs() {
+  const rostersMap = loadRostersMap();
+
+  const defaultName = $("rosterSelect")?.value || "";
+  const rosterName = prompt("Enter a name for this roster:", defaultName || "New Roster");
+  if (!rosterName) return;
+
+  // Build snapshot: only what you care about
+  const snapshot = players.map((p) => ({
+    name: p.name,
+    games: p.games,
+    rest: p.rest,
+    wins: p.wins,
+    losses: p.losses,
+  }));
+
+  rostersMap[rosterName] = snapshot;
+  saveRostersMap(rostersMap);
+  refreshRosterSelect();
+  $("rosterSelect").value = rosterName;
+  alert(`Roster "${rosterName}" saved on this device.`);
+}
+function loadRosterFromSelect() {
+  const select = $("rosterSelect");
+  if (!select) return;
+
+  const rosterName = select.value;
+  if (!rosterName) {
+    alert("Please select a roster first.");
+    return;
+  }
+
+  const rostersMap = loadRostersMap();
+  const snapshot = rostersMap[rosterName];
+  if (!snapshot) {
+    alert("Roster not found on this device.");
+    return;
+  }
+
+  if (!confirm(`Load roster "${rosterName}"? This may reset stats for changed players.`)) {
+    return;
+  }
+
+  // Apply snapshot to players
+  for (let i = 0; i < players.length; i++) {
+    const p = players[i];
+    const snap = snapshot[i];
+
+    if (!snap || !snap.name) {
+      // No player in this slot in the roster
+      if (p.name) {
+        // Clear this slot
+        p.name = "";
+        p.games = 0;
+        p.rest = 0;
+        p.wins = 0;
+        p.losses = 0;
+        p.partners = {};
+        p.opponents = {};
+      }
+      continue;
+    }
+
+    // If name changed, reset stats to snapshot (and clear partners/opponents)
+    if (p.name !== snap.name) {
+      p.name = snap.name;
+      p.games = snap.games || 0;
+      p.rest = snap.rest || 0;
+      p.wins = snap.wins || 0;
+      p.losses = snap.losses || 0;
+      p.partners = {};
+      p.opponents = {};
+    } else {
+      // Same name: update stats from snapshot (building across sessions)
+      p.games = snap.games || p.games;
+      p.rest = snap.rest || p.rest;
+      p.wins = snap.wins || p.wins;
+      p.losses = snap.losses || p.losses;
+      // partners/opponents intentionally not restored
+    }
+  }
+
+  // Clear courts & history when loading a roster
+  courts = [];
+  historyStack = [];
+  currentRoundId = 0;
+
+  saveState();
+  renderPlayersList();
+  renderStatsTable();
+  renderCourts();
+  renderSummary();
+  renderNeedsToPlay();
+  $("playerDetails").innerHTML = "<p>No player selected.</p>";
+
+  alert(`Roster "${rosterName}" loaded.`);
+}
+
 
 // --- DOM helpers -----------------------------------------------------------
 
@@ -807,6 +941,18 @@ window.addEventListener("DOMContentLoaded", () => {
   renderSummary();
   renderNeedsToPlay();
   updateTimerDisplay();
+  refreshRosterSelect();
+
+  const saveRosterBtn = $("saveRosterBtn");
+  if (saveRosterBtn) {
+    saveRosterBtn.addEventListener("click", saveCurrentRosterAs);
+  }
+
+  const loadRosterFromSelectBtn = $("loadRosterFromSelectBtn");
+  if (loadRosterFromSelectBtn) {
+    loadRosterFromSelectBtn.addEventListener("click", loadRosterFromSelect);
+  }
+
 
   $("themeToggle").addEventListener("click", toggleTheme);
   $("nextRoundBtn").addEventListener("click", generateNextRound);
@@ -828,4 +974,5 @@ window.addEventListener("DOMContentLoaded", () => {
   $("pauseTimerBtn").addEventListener("click", pauseTimer);
   $("resetTimerBtn").addEventListener("click", resetTimer);
   $("timerDuration").addEventListener("change", resetTimer);
+  
 });
